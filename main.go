@@ -23,18 +23,23 @@ func main() {
 	log.Printf("Authorized on account %s", bot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
-	u.Timeout = 60
+	u.Timeout = 30
 
 	updates := bot.GetUpdatesChan(u)
 
 	for update := range updates {
-		if update.Message != nil { // If we got a message
-			log.Printf("[%s] %s", update.Message.From.UserName, update.Message.Text)
-
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, update.Message.Text)
-			msg.ReplyToMessageID = update.Message.MessageID
-
-			bot.Send(msg)
+		if update.Message == nil {
+			continue
 		}
+
+		var msg tgbotapi.Chattable
+
+		if update.Message.IsCommand() {
+			msg = handleCommand(update.Message)
+		} else {
+			msg = handleText(update.Message)
+		}
+
+		bot.Send(msg)
 	}
 }
